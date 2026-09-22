@@ -1,6 +1,7 @@
 import "server-only";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { hashPassword } from "@/lib/auth/password";
+import { encryptSecret, decryptSecret } from "@/lib/crypto/secretbox";
 import { DEFAULT_PRICING } from "@/lib/config";
 import type {
   AccountCheck,
@@ -24,6 +25,7 @@ function toAppUser(id: string, d: UserDoc): AppUser {
   return {
     uid: id,
     username: d.username,
+    fullName: d.fullName ?? d.username,
     role: d.role,
     active: d.active,
     createdAt: d.createdAt,
@@ -65,6 +67,7 @@ export async function superadminExists(): Promise<boolean> {
 export async function createUser(params: {
   username: string;
   password: string;
+  fullName: string;
   role: Role;
   createdBy: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
@@ -84,7 +87,9 @@ export async function createUser(params: {
   }
   const doc: UserDoc = {
     username,
+    fullName: params.fullName.trim() || username,
     passwordHash: hashPassword(params.password),
+    passwordEnc: encryptSecret(params.password),
     role: params.role,
     active: true,
     createdAt: Date.now(),
@@ -93,6 +98,98 @@ export async function createUser(params: {
     profiles: {},
   };
   await db().collection("users").add(doc);
+  return { ok: true };
+}
+
+function firstNameSlug(fullName: string): string {
+  const first = fullName.trim().split(/\s+/)[0] ?? "";
+  const slug = first.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return slug || "user";
+}
+
+async function generateUsername(base: string): Promise<string> {
+  // Try the bare first name, then firstname + random digits until unique.
+  if (base.length >= 3 && !(await findUserByUsername(base))) return base;
+  for (let i = 0; i < 40; i++) {
+    const candidate = `${base}${Math.floor(100 + Math.random() * 900)}`;
+    if (candidate.length <= 20 && !(await findUserByUsername(candidate))) {
+      return candidate;
+    }
+  }
+  return `${base}${Date.now().toString().slice(-5)}`;
+}
+
+/**
+ * Create a member from a full name: auto-generates a unique username and a
+ * password, both based on the first name. Returns the generated credentials so
+ * the admin can share them.
+ */
+export async function createMember(params: {
+  fullName: string;
+  createdBy: string | null;
+}): Promise<{ ok: boolean; error?: string; username?: string; password?: string }> {
+  const fullName = params.fullName.trim();
+  if (fullName.length < 2) return { ok: false, error: "Enter the member's full name." };
+
+  const base = firstNameSlug(fullName);
+  const username = await generateUsername(base);
+  const firstCap = base.charAt(0).toUpperCase() + base.slice(1);
+  const password = `${firstCap}${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const res = await createUser({
+    username,
+    password,
+    fullName,
+    role: "member",
+    createdBy: params.createdBy,
+  });
+  if (!res.ok) return { ok: false, error: res.error };
+  return { ok: true, username, password };
+}
+
+export async function getMemberCredentials(
+  uid: string,
+): Promise<{ username: string; fullName: string; password: string | null } | null> {
+  const snap = await db().collection("users").doc(uid).get();
+  if (!snap.exists) return null;
+  const d = snap.data() as UserDoc;
+  return {
+    username: d.username,
+    fullName: d.fullName ?? d.username,
+    password: decryptSecret(d.passwordEnc),
+  };
+}
+
+export async function updateMemberCredentials(
+  uid: string,
+  patch: { username?: string; password?: string },
+): Promise<{ ok: boolean; error?: string }> {
+  const snap = await db().collection("users").doc(uid).get();
+  if (!snap.exists) return { ok: false, error: "Member not found." };
+  const update: Record<string, unknown> = {};
+
+  if (patch.username !== undefined) {
+    const uname = patch.username.trim().toLowerCase();
+    if (!/^[a-z0-9._-]{3,20}$/.test(uname)) {
+      return { ok: false, error: "Username must be 3–20 chars (letters, numbers, . _ -)." };
+    }
+    const existing = await findUserByUsername(uname);
+    if (existing && existing.id !== uid) {
+      return { ok: false, error: "That username is already taken." };
+    }
+    update.username = uname;
+  }
+
+  if (patch.password !== undefined && patch.password !== "") {
+    if (patch.password.length < 6) {
+      return { ok: false, error: "Password must be at least 6 characters." };
+    }
+    update.passwordHash = hashPassword(patch.password);
+    update.passwordEnc = encryptSecret(patch.password);
+  }
+
+  if (Object.keys(update).length === 0) return { ok: false, error: "Nothing to change." };
+  await db().collection("users").doc(uid).update(update);
   return { ok: true };
 }
 

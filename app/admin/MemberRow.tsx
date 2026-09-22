@@ -7,7 +7,8 @@ import {
 } from "@/app/actions/admin";
 import { formatDate } from "@/components/ui";
 import { PLATFORMS, LINK_TYPES, CURRENCY } from "@/lib/config";
-import type { AppUser, Platform, PricingOverride, PricingTable } from "@/lib/types";
+import CredentialsPanel from "./CredentialsPanel";
+import type { AppUser, PricingOverride, PricingTable } from "@/lib/types";
 
 export default function MemberRow({
   member,
@@ -19,6 +20,7 @@ export default function MemberRow({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [editingRate, setEditingRate] = useState(false);
+  const [showCreds, setShowCreds] = useState(false);
   const hasCustom = !!member.pricing && Object.keys(member.pricing).length > 0;
 
   function toggleActive() {
@@ -64,7 +66,10 @@ export default function MemberRow({
     <li className="px-4 py-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <span className="font-medium text-slate-900">@{member.username}</span>
+          <span className="font-medium text-slate-900">{member.fullName}</span>
+          <span className="ml-2 font-mono text-xs text-slate-500">
+            @{member.username}
+          </span>
           <span className="ml-2 text-xs text-slate-400">
             added {formatDate(member.createdAt)}
           </span>
@@ -96,6 +101,12 @@ export default function MemberRow({
             {member.active ? "active" : "disabled"}
           </span>
           <button
+            onClick={() => setShowCreds((v) => !v)}
+            className="text-slate-600 hover:text-slate-900"
+          >
+            Credentials
+          </button>
+          <button
             onClick={() => setEditingRate((v) => !v)}
             className="text-slate-600 hover:text-slate-900"
           >
@@ -110,6 +121,8 @@ export default function MemberRow({
           </button>
         </div>
       </div>
+
+      {showCreds && <CredentialsPanel uid={member.uid} />}
 
       {editingRate && (
         <form action={saveRate} className="mt-3 rounded-lg border border-slate-200 p-3">

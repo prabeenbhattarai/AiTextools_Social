@@ -4,6 +4,7 @@ import { computeStats, getGlobalPricing, listLinksByUser } from "@/lib/data";
 import { effectiveTable } from "@/lib/config";
 import { StatCard, money } from "@/components/ui";
 import RatesCard from "@/components/RatesCard";
+import Rules from "@/components/Rules";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,8 @@ export default async function MemberOverview() {
       )}
 
       <RatesCard rates={rates} custom={custom} />
+
+      <Rules rates={rates} custom={custom} />
 
       <div className="flex flex-wrap gap-3">
         <Link

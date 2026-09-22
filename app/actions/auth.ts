@@ -4,11 +4,20 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSession, destroySession, getSessionUser } from "@/lib/auth/session";
 import { verifyPassword } from "@/lib/auth/password";
-import { createUser, findUserByUsername, superadminExists } from "@/lib/data";
+import {
+  createMember,
+  createUser,
+  findUserByUsername,
+  superadminExists,
+} from "@/lib/data";
 
 export interface FormState {
   error?: string;
   ok?: boolean;
+}
+
+export interface MemberFormState extends FormState {
+  credentials?: { username: string; password: string; fullName: string };
 }
 
 export async function loginAction(
@@ -60,6 +69,7 @@ export async function setupAction(
   const res = await createUser({
     username,
     password,
+    fullName: username,
     role: "superadmin",
     createdBy: null,
   });
@@ -70,21 +80,26 @@ export async function setupAction(
   redirect("/admin");
 }
 
-// Superadmin-only: create a member account.
+// Superadmin-only: create a member from their full name.
+// The system generates a unique username and password based on the first name.
 export async function createMemberAction(
-  _prev: FormState,
+  _prev: MemberFormState,
   formData: FormData,
-): Promise<FormState> {
+): Promise<MemberFormState> {
   const admin = await getSessionUser();
   if (admin?.role !== "superadmin") return { error: "Forbidden." };
 
-  const res = await createUser({
-    username: String(formData.get("username") ?? ""),
-    password: String(formData.get("password") ?? ""),
-    role: "member",
-    createdBy: admin.username,
-  });
+  const fullName = String(formData.get("fullName") ?? "");
+  const res = await createMember({ fullName, createdBy: admin.username });
   if (!res.ok) return { error: res.error };
+
   revalidatePath("/admin", "layout");
-  return { ok: true };
+  return {
+    ok: true,
+    credentials: {
+      username: res.username!,
+      password: res.password!,
+      fullName: fullName.trim(),
+    },
+  };
 }

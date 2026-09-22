@@ -16,10 +16,11 @@ export type PlatformProfiles = Partial<Record<Platform, string>>;
 /** Result of checking whether a link belongs to the member's own account. */
 export type AccountCheck = "match" | "mismatch" | "unset";
 
-/** Safe user shape (never includes the password hash). */
+/** Safe user shape (never includes secrets). */
 export interface AppUser {
   uid: string;
   username: string;
+  fullName: string;
   role: Role;
   active: boolean;
   createdAt: number;
@@ -30,9 +31,11 @@ export interface AppUser {
   profiles: PlatformProfiles;
 }
 
-/** Firestore document for a user (server-only — has the hash). */
+/** Firestore document for a user (server-only — has secrets). */
 export interface UserDoc extends Omit<AppUser, "uid"> {
   passwordHash: string;
+  /** AES-encrypted copy of the password so the admin can view it. */
+  passwordEnc: string;
 }
 
 export interface LinkItem {

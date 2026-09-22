@@ -71,6 +71,7 @@ export async function getSessionUser(): Promise<AppUser | null> {
   return {
     uid: snap.id,
     username: doc.username,
+    fullName: doc.fullName ?? doc.username,
     role: doc.role,
     active: doc.active,
     createdAt: doc.createdAt,
