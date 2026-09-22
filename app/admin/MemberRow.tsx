@@ -22,7 +22,6 @@ export default function MemberRow({
   const [error, setError] = useState<string | null>(null);
   const [editingRate, setEditingRate] = useState(false);
   const [showCreds, setShowCreds] = useState(false);
-  const [showPay, setShowPay] = useState(false);
   const hasCustom = !!member.pricing && Object.keys(member.pricing).length > 0;
 
   function toggleActive() {
@@ -102,12 +101,7 @@ export default function MemberRow({
           >
             {member.active ? "active" : "disabled"}
           </span>
-          <button
-            onClick={() => setShowPay((v) => !v)}
-            className="text-slate-600 hover:text-slate-900"
-          >
-            Payment
-          </button>
+          <MemberPaymentView uid={member.uid} name={member.fullName} />
           <button
             onClick={() => setShowCreds((v) => !v)}
             className="text-slate-600 hover:text-slate-900"
@@ -130,7 +124,6 @@ export default function MemberRow({
         </div>
       </div>
 
-      {showPay && <MemberPaymentView uid={member.uid} />}
       {showCreds && <CredentialsPanel uid={member.uid} />}
 
       {editingRate && (
