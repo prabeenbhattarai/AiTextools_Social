@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// This app performs ALL Firestore reads/writes through the server using the
+// Firebase Admin SDK, which bypasses these rules. Direct client access is
+// therefore denied everywhere. This is deliberate: it keeps money/status
+// fields server-controlled and prevents users from editing their own status.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
