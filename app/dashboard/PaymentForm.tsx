@@ -44,30 +44,41 @@ export default function PaymentForm({
 
       <form action={action} className="space-y-5">
         <div className="flex gap-3">
-          {(["esewa", "bank"] as PaymentMethod[]).map((m) => (
-            <label
-              key={m}
-              className={`flex-1 cursor-pointer rounded-lg border px-4 py-3 text-sm font-medium ${
-                method === m
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 text-slate-700 hover:border-slate-400"
-              }`}
-            >
-              <input
-                type="radio"
-                name="method"
-                value={m}
-                checked={method === m}
-                onChange={() => setMethod(m)}
-                className="sr-only"
-              />
-              {m === "esewa" ? "eSewa" : "Bank transfer"}
-            </label>
-          ))}
+          {(["esewa", "bank"] as PaymentMethod[]).map((m) => {
+            const active = method === m;
+            const activeCls =
+              m === "esewa"
+                ? "border-green-600 bg-green-600 text-white"
+                : "border-sky-700 bg-sky-700 text-white";
+            return (
+              <label
+                key={m}
+                className={`flex-1 cursor-pointer rounded-lg border px-4 py-3 text-sm font-medium ${
+                  active
+                    ? activeCls
+                    : "border-slate-300 text-slate-700 hover:border-slate-400"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="method"
+                  value={m}
+                  checked={active}
+                  onChange={() => setMethod(m)}
+                  className="sr-only"
+                />
+                {m === "esewa" ? "eSewa" : "Bank transfer"}
+              </label>
+            );
+          })}
         </div>
 
         {method === "esewa" ? (
-          <div className="space-y-4">
+          <div className="space-y-4 rounded-lg border border-green-200 bg-green-50/60 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+              <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
+              eSewa
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field name="esewa_fullName" label="Full name" defaultValue={payment?.esewa?.fullName} placeholder="Name on eSewa" />
               <Field name="esewa_number" label="eSewa number" defaultValue={payment?.esewa?.number} placeholder="98XXXXXXXX" />
@@ -118,7 +129,11 @@ export default function PaymentForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className={`rounded-md px-4 py-2 font-medium text-white disabled:opacity-50 ${
+            method === "esewa"
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-slate-900 hover:bg-slate-800"
+          }`}
         >
           {pending ? "Saving…" : "Save payment details"}
         </button>
