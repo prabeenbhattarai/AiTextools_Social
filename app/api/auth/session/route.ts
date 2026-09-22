@@ -32,7 +32,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    // Log the real reason so deployment/credential problems are diagnosable.
+    console.error("[session] failed to create session cookie:", err);
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 }
