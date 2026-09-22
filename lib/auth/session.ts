@@ -75,5 +75,7 @@ export async function getSessionUser(): Promise<AppUser | null> {
     active: doc.active,
     createdAt: doc.createdAt,
     createdBy: doc.createdBy ?? null,
+    pricing: doc.pricing ?? null,
+    profiles: doc.profiles ?? {},
   };
 }

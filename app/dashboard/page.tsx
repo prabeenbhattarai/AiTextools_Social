@@ -1,11 +1,14 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
-import { computeStats, listLinksByUser } from "@/lib/data";
+import { computeStats, getGlobalPricing, listLinksByUser } from "@/lib/data";
+import { effectivePrice } from "@/lib/config";
 import { StatCard, money } from "@/components/ui";
 import SignOutButton from "@/components/SignOutButton";
 import Rules from "@/components/Rules";
 import AddLinkForm from "./AddLinkForm";
 import MyLinks from "./MyLinks";
+import ProfilesForm from "./ProfilesForm";
+import type { PricingTable } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +17,24 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
   if (user.role === "superadmin") redirect("/admin");
 
-  const links = await listLinksByUser(user.uid);
+  const [links, global] = await Promise.all([
+    listLinksByUser(user.uid),
+    getGlobalPricing(),
+  ]);
   const stats = computeStats(links);
+
+  // The member's effective rate table (their overrides applied over the global).
+  const rates: PricingTable = {
+    reddit: {
+      post: effectivePrice("reddit", "post", global, user.pricing),
+      comment: effectivePrice("reddit", "comment", global, user.pricing),
+    },
+    linkedin: {
+      post: effectivePrice("linkedin", "post", global, user.pricing),
+      comment: effectivePrice("linkedin", "comment", global, user.pricing),
+    },
+  };
+  const hasCustom = !!user.pricing && Object.keys(user.pricing).length > 0;
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -37,7 +56,8 @@ export default async function DashboardPage() {
           <StatCard label="Total earnings" value={money(stats.earnings)} />
         </div>
 
-        <Rules />
+        <Rules rates={rates} custom={hasCustom} />
+        <ProfilesForm profiles={user.profiles} />
         <AddLinkForm />
         <MyLinks links={links} />
       </div>

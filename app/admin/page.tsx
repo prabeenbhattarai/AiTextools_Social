@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
-import { computeStats, listAllLinks, listMembers } from "@/lib/data";
+import {
+  computeStats,
+  getGlobalPricing,
+  listAllLinks,
+  listMembers,
+} from "@/lib/data";
 import { StatCard, money } from "@/components/ui";
 import SignOutButton from "@/components/SignOutButton";
 import Filters from "./Filters";
 import AdminLinkRow from "./AdminLinkRow";
 import CreateMemberForm from "./CreateMemberForm";
 import MemberRow from "./MemberRow";
+import PricingSettings from "./PricingSettings";
 import type { LinkStatus, Platform } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +30,11 @@ export default async function AdminPage({
   const platform = (sp.platform ?? "all") as Platform | "all";
   const status = (sp.status ?? "all") as LinkStatus | "all";
 
-  const [allLinks, members] = await Promise.all([listAllLinks(), listMembers()]);
+  const [allLinks, members, global] = await Promise.all([
+    listAllLinks(),
+    listMembers(),
+    getGlobalPricing(),
+  ]);
   const stats = computeStats(allLinks);
 
   const filtered = allLinks.filter(
@@ -55,11 +65,16 @@ export default async function AdminPage({
           <StatCard label="Total payout" value={money(stats.earnings)} />
         </div>
 
+        {/* Global rates */}
+        <PricingSettings rates={global} />
+
         {/* Members */}
         <section>
           <h2 className="text-lg font-semibold text-slate-900">Members</h2>
           <p className="mt-1 text-sm text-slate-500">
             Create accounts and share the username &amp; password with your team.
+            Use <span className="font-medium">Rate</span> to give a member a
+            custom price.
           </p>
           <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5">
             <CreateMemberForm />
@@ -70,7 +85,7 @@ export default async function AdminPage({
             ) : (
               <ul className="divide-y divide-slate-100">
                 {members.map((m) => (
-                  <MemberRow key={m.uid} member={m} />
+                  <MemberRow key={m.uid} member={m} global={global} />
                 ))}
               </ul>
             )}

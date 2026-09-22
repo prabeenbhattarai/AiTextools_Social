@@ -1,13 +1,17 @@
 import "server-only";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { hashPassword } from "@/lib/auth/password";
-import { priceFor } from "@/lib/config";
+import { DEFAULT_PRICING } from "@/lib/config";
 import type {
+  AccountCheck,
   AppUser,
   LinkItem,
   LinkStatus,
   LinkType,
   Platform,
+  PlatformProfiles,
+  PricingOverride,
+  PricingTable,
   Role,
   UserDoc,
 } from "@/lib/types";
@@ -24,7 +28,15 @@ function toAppUser(id: string, d: UserDoc): AppUser {
     active: d.active,
     createdAt: d.createdAt,
     createdBy: d.createdBy ?? null,
+    pricing: d.pricing ?? null,
+    profiles: d.profiles ?? {},
   };
+}
+
+export async function getUserById(uid: string): Promise<AppUser | null> {
+  const snap = await db().collection("users").doc(uid).get();
+  if (!snap.exists) return null;
+  return toAppUser(snap.id, snap.data() as UserDoc);
 }
 
 export async function findUserByUsername(
@@ -77,6 +89,8 @@ export async function createUser(params: {
     active: true,
     createdAt: Date.now(),
     createdBy: params.createdBy,
+    pricing: null,
+    profiles: {},
   };
   await db().collection("users").add(doc);
   return { ok: true };
@@ -99,6 +113,39 @@ export async function setUserActive(
   await db().collection("users").doc(uid).update({ active });
 }
 
+export async function setUserPricing(
+  uid: string,
+  pricing: PricingOverride | null,
+): Promise<void> {
+  await db().collection("users").doc(uid).update({ pricing: pricing ?? null });
+}
+
+export async function setUserProfiles(
+  uid: string,
+  profiles: PlatformProfiles,
+): Promise<void> {
+  await db().collection("users").doc(uid).update({ profiles });
+}
+
+/* --------------------------- Global pricing --------------------------- */
+
+export async function getGlobalPricing(): Promise<PricingTable> {
+  const snap = await db().collection("settings").doc("pricing").get();
+  if (snap.exists) {
+    // Merge over defaults so a newly added platform/type never comes back undefined.
+    const stored = snap.data() as Partial<PricingTable>;
+    return {
+      reddit: { ...DEFAULT_PRICING.reddit, ...(stored.reddit ?? {}) },
+      linkedin: { ...DEFAULT_PRICING.linkedin, ...(stored.linkedin ?? {}) },
+    };
+  }
+  return DEFAULT_PRICING;
+}
+
+export async function setGlobalPricing(table: PricingTable): Promise<void> {
+  await db().collection("settings").doc("pricing").set(table);
+}
+
 /* ----------------------------- Links ----------------------------- */
 
 export async function createLink(params: {
@@ -108,6 +155,8 @@ export async function createLink(params: {
   type: LinkType;
   url: string;
   note: string;
+  price: number;
+  accountCheck: AccountCheck;
 }): Promise<void> {
   const now = Date.now();
   const item: Omit<LinkItem, "id"> = {
@@ -118,7 +167,8 @@ export async function createLink(params: {
     url: params.url,
     note: params.note,
     status: "pending",
-    price: priceFor(params.platform, params.type),
+    price: params.price,
+    accountCheck: params.accountCheck,
     createdAt: now,
     updatedAt: now,
     reviewedBy: null,
@@ -136,7 +186,14 @@ export async function getLink(id: string): Promise<LinkItem | null> {
 export async function updateOwnLink(
   id: string,
   userId: string,
-  patch: { platform: Platform; type: LinkType; url: string; note: string },
+  patch: {
+    platform: Platform;
+    type: LinkType;
+    url: string;
+    note: string;
+    price: number;
+    accountCheck: AccountCheck;
+  },
 ): Promise<{ ok: boolean; error?: string }> {
   const link = await getLink(id);
   if (!link || link.userId !== userId) return { ok: false, error: "Not found." };
@@ -146,11 +203,7 @@ export async function updateOwnLink(
   await db()
     .collection("links")
     .doc(id)
-    .update({
-      ...patch,
-      price: priceFor(patch.platform, patch.type),
-      updatedAt: Date.now(),
-    });
+    .update({ ...patch, updatedAt: Date.now() });
   return { ok: true };
 }
 
@@ -171,16 +224,17 @@ export async function reviewLink(
   id: string,
   decision: "approve" | "reject",
   reviewer: string,
+  price?: number,
 ): Promise<void> {
-  await db()
-    .collection("links")
-    .doc(id)
-    .update({
-      status: decision === "approve" ? "approved" : "rejected",
-      reviewedBy: reviewer,
-      reviewedAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+  const patch: Record<string, unknown> = {
+    status: decision === "approve" ? "approved" : "rejected",
+    reviewedBy: reviewer,
+    reviewedAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  // Lock in the current effective price at approval time.
+  if (decision === "approve" && typeof price === "number") patch.price = price;
+  await db().collection("links").doc(id).update(patch);
 }
 
 export async function listLinksByUser(userId: string): Promise<LinkItem[]> {

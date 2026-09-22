@@ -1,5 +1,5 @@
 import { CURRENCY, platformLabel } from "@/lib/config";
-import type { LinkStatus, Platform } from "@/lib/types";
+import type { AccountCheck, LinkStatus, Platform } from "@/lib/types";
 
 export function money(n: number): string {
   return `${CURRENCY} ${n.toLocaleString()}`;
@@ -42,6 +42,27 @@ export function PlatformBadge({ platform }: { platform: Platform }) {
       }`}
     >
       {platformLabel(platform)}
+    </span>
+  );
+}
+
+const ACCOUNT_STYLES: Record<AccountCheck, string> = {
+  match: "bg-emerald-100 text-emerald-800",
+  mismatch: "bg-red-100 text-red-700",
+  unset: "bg-slate-100 text-slate-500",
+};
+const ACCOUNT_LABELS: Record<AccountCheck, string> = {
+  match: "✓ Same account",
+  mismatch: "⚠ Different account",
+  unset: "No profile set",
+};
+
+export function AccountBadge({ check }: { check: AccountCheck }) {
+  return (
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${ACCOUNT_STYLES[check]}`}
+    >
+      {ACCOUNT_LABELS[check]}
     </span>
   );
 }

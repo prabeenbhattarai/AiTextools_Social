@@ -2,7 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { reviewLinkAction } from "@/app/actions/admin";
-import { PlatformBadge, StatusBadge, formatDate, money } from "@/components/ui";
+import {
+  AccountBadge,
+  PlatformBadge,
+  StatusBadge,
+  formatDate,
+  money,
+} from "@/components/ui";
 import type { LinkItem } from "@/lib/types";
 
 export default function AdminLinkRow({ link }: { link: LinkItem }) {
@@ -40,7 +46,10 @@ export default function AdminLinkRow({ link }: { link: LinkItem }) {
       </td>
       <td className="px-4 py-3 text-slate-700">{money(link.price)}</td>
       <td className="px-4 py-3">
-        <StatusBadge status={link.status} />
+        <div className="flex flex-col items-start gap-1">
+          <StatusBadge status={link.status} />
+          <AccountBadge check={link.accountCheck} />
+        </div>
         {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">

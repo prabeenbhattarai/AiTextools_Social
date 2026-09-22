@@ -2,8 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { deleteLinkAction, updateLinkAction } from "@/app/actions/links";
-import { PLATFORMS, LINK_TYPES, priceFor } from "@/lib/config";
-import { PlatformBadge, StatusBadge, formatDate, money } from "@/components/ui";
+import { PLATFORMS, LINK_TYPES } from "@/lib/config";
+import {
+  AccountBadge,
+  PlatformBadge,
+  StatusBadge,
+  formatDate,
+  money,
+} from "@/components/ui";
 import type { LinkItem } from "@/lib/types";
 
 export default function MyLinks({ links }: { links: LinkItem[] }) {
@@ -114,10 +120,9 @@ function LinkRow({ link }: { link: LinkItem }) {
       >
         {link.url}
       </a>
-      <span className="text-sm text-slate-500">
-        {money(priceFor(link.platform, link.type))}
-      </span>
+      <span className="text-sm text-slate-500">{money(link.price)}</span>
       <StatusBadge status={link.status} />
+      <AccountBadge check={link.accountCheck} />
       <span className="text-xs text-slate-400">{formatDate(link.createdAt)}</span>
       {editable ? (
         <div className="flex gap-2">
