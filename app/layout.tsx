@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Engagement Platform",
-  description: "Register, get approved, and earn from real social engagement.",
+  title: "Link Tracker",
+  description: "Track and approve Reddit & LinkedIn post and comment links.",
 };
 
 export default function RootLayout({

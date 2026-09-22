@@ -2,53 +2,31 @@
 
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { sendStatusEmail } from "@/lib/email";
-import type { UserProfile } from "@/lib/types";
+import { reviewLink, setUserActive } from "@/lib/data";
 
-export type ReviewDecision = "approve" | "reject";
-
-export interface ReviewResult {
+export interface ActionResult {
   ok: boolean;
   error?: string;
 }
 
-/**
- * Approve or reject a pending applicant. Only callable by an admin.
- * Writes the status change and notifies the user by email.
- */
-export async function reviewUser(
-  uid: string,
-  decision: ReviewDecision,
-  reason?: string,
-): Promise<ReviewResult> {
+export async function reviewLinkAction(
+  id: string,
+  decision: "approve" | "reject",
+): Promise<ActionResult> {
   const admin = await getSessionUser();
-  if (!admin?.isAdmin) return { ok: false, error: "Forbidden" };
-  if (!uid) return { ok: false, error: "Missing user id" };
+  if (admin?.role !== "superadmin") return { ok: false, error: "Forbidden." };
+  await reviewLink(id, decision, admin.username);
+  revalidatePath("/admin");
+  return { ok: true };
+}
 
-  const db = getAdminDb();
-  const ref = db.collection("users").doc(uid);
-  const snap = await ref.get();
-  if (!snap.exists) return { ok: false, error: "User not found" };
-
-  const data = snap.data() as UserProfile;
-  const status = decision === "approve" ? "approved" : "rejected";
-
-  await ref.update({
-    status,
-    approvedAt: decision === "approve" ? Date.now() : null,
-    reviewedBy: admin.email,
-    rejectionReason: decision === "reject" ? reason ?? null : null,
-    updatedAt: Date.now(),
-  });
-
-  try {
-    await sendStatusEmail(data.email, data.fullName, status, reason);
-  } catch (e) {
-    // Don't fail the review if the email provider is down; log it.
-    console.error("Failed to send status email:", e);
-  }
-
+export async function setMemberActiveAction(
+  uid: string,
+  active: boolean,
+): Promise<ActionResult> {
+  const admin = await getSessionUser();
+  if (admin?.role !== "superadmin") return { ok: false, error: "Forbidden." };
+  await setUserActive(uid, active);
   revalidatePath("/admin");
   return { ok: true };
 }
