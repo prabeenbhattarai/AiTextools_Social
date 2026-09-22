@@ -9,6 +9,7 @@ import type {
   LinkItem,
   LinkStatus,
   LinkType,
+  PaymentDetails,
   Platform,
   PlatformProfiles,
   PricingOverride,
@@ -96,6 +97,7 @@ export async function createUser(params: {
     createdBy: params.createdBy,
     pricing: null,
     profiles: {},
+    payment: null,
   };
   await db().collection("users").add(doc);
   return { ok: true };
@@ -222,6 +224,19 @@ export async function setUserProfiles(
   profiles: PlatformProfiles,
 ): Promise<void> {
   await db().collection("users").doc(uid).update({ profiles });
+}
+
+export async function getUserPayment(uid: string): Promise<PaymentDetails | null> {
+  const snap = await db().collection("users").doc(uid).get();
+  if (!snap.exists) return null;
+  return (snap.data() as UserDoc).payment ?? null;
+}
+
+export async function setUserPayment(
+  uid: string,
+  payment: PaymentDetails,
+): Promise<void> {
+  await db().collection("users").doc(uid).update({ payment });
 }
 
 /* --------------------------- Global pricing --------------------------- */

@@ -29,6 +29,31 @@ export const DEFAULT_PRICING: PricingTable = {
 
 export const CURRENCY = "Rs";
 
+// Nepali class-A commercial banks (for the member payment form).
+export const NEPALI_BANKS: string[] = [
+  "Nepal Bank Limited",
+  "Rastriya Banijya Bank",
+  "Agriculture Development Bank",
+  "Nabil Bank",
+  "Nepal Investment Mega Bank",
+  "Standard Chartered Bank Nepal",
+  "Himalayan Bank",
+  "Nepal SBI Bank",
+  "Everest Bank",
+  "Kumari Bank",
+  "Laxmi Sunrise Bank",
+  "Citizens Bank International",
+  "Prime Commercial Bank",
+  "Sanima Bank",
+  "Machhapuchchhre Bank",
+  "NIC Asia Bank",
+  "Global IME Bank",
+  "NMB Bank",
+  "Prabhu Bank",
+  "Siddhartha Bank",
+  "Nepal Credit and Commerce Bank",
+];
+
 /**
  * The amount a specific user earns for a platform/type: their override if set,
  * otherwise the global rate, otherwise the built-in default.

@@ -16,6 +16,31 @@ export type PlatformProfiles = Partial<Record<Platform, string>>;
 /** Result of checking whether a link belongs to the member's own account. */
 export type AccountCheck = "match" | "mismatch" | "unset";
 
+/* ----------------------------- Payment ----------------------------- */
+export type PaymentMethod = "esewa" | "bank";
+
+export interface EsewaDetails {
+  fullName: string;
+  number: string;
+  /** Optional QR as a data: URL. */
+  qr: string | null;
+}
+
+export interface BankDetails {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  branch: string;
+  contact: string;
+}
+
+export interface PaymentDetails {
+  method: PaymentMethod;
+  esewa: EsewaDetails | null;
+  bank: BankDetails | null;
+  updatedAt: number;
+}
+
 /** Safe user shape (never includes secrets). */
 export interface AppUser {
   uid: string;
@@ -36,6 +61,8 @@ export interface UserDoc extends Omit<AppUser, "uid"> {
   passwordHash: string;
   /** AES-encrypted copy of the password so the admin can view it. */
   passwordEnc: string;
+  /** How the member wants to be paid. */
+  payment: PaymentDetails | null;
 }
 
 export interface LinkItem {

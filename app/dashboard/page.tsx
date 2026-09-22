@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth/session";
-import { computeStats, getGlobalPricing, listLinksByUser } from "@/lib/data";
+import {
+  computeStats,
+  getGlobalPricing,
+  getUserPayment,
+  listLinksByUser,
+} from "@/lib/data";
 import { effectiveTable } from "@/lib/config";
 import { StatCard, money } from "@/components/ui";
 import RatesCard from "@/components/RatesCard";
@@ -12,9 +17,10 @@ export default async function MemberOverview() {
   const user = await getSessionUser();
   if (!user) return null;
 
-  const [links, global] = await Promise.all([
+  const [links, global, payment] = await Promise.all([
     listLinksByUser(user.uid),
     getGlobalPricing(),
+    getUserPayment(user.uid),
   ]);
   const stats = computeStats(links);
   const rates = effectiveTable(global, user.pricing);
@@ -44,6 +50,15 @@ export default async function MemberOverview() {
           verified.{" "}
           <Link href="/dashboard/accounts" className="font-medium underline">
             Add accounts →
+          </Link>
+        </div>
+      )}
+
+      {!payment && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Add your payment details so you can receive payouts.{" "}
+          <Link href="/dashboard/payment" className="font-medium underline">
+            Add payment →
           </Link>
         </div>
       )}
