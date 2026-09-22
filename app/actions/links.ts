@@ -44,7 +44,7 @@ export async function createLinkAction(
     price: effectivePrice(parsed.platform, parsed.type, global, user.pricing),
     accountCheck: checkAccount(parsed.platform, parsed.url, user.profiles),
   });
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
 
@@ -64,7 +64,7 @@ export async function updateLinkAction(
     accountCheck: checkAccount(parsed.platform, parsed.url, user.profiles),
   });
   if (!res.ok) return { error: res.error };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
 
@@ -73,6 +73,6 @@ export async function deleteLinkAction(id: string): Promise<LinkFormState> {
   if (!user) return { error: "Forbidden." };
   const res = await deleteOwnLink(id, user.uid);
   if (!res.ok) return { error: res.error };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }

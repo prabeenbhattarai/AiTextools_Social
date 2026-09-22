@@ -4,36 +4,45 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { PLATFORMS } from "@/lib/config";
 
 const STATUSES = ["pending", "approved", "rejected"];
+const ACCOUNTS = [
+  { id: "match", label: "Same account" },
+  { id: "mismatch", label: "Different account" },
+  { id: "unset", label: "No profile" },
+];
 
 export default function Filters() {
   const router = useRouter();
   const params = useSearchParams();
-  const platform = params.get("platform") ?? "all";
-  const status = params.get("status") ?? "all";
 
   function update(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
     if (value === "all") next.delete(key);
     else next.set(key, value);
-    router.push(`/admin?${next.toString()}`);
+    router.push(`/admin/links?${next.toString()}`);
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Select
         label="Platform"
-        value={platform}
+        value={params.get("platform") ?? "all"}
         onChange={(v) => update("platform", v)}
         options={[{ id: "all", label: "All platforms" }, ...PLATFORMS]}
       />
       <Select
         label="Status"
-        value={status}
+        value={params.get("status") ?? "all"}
         onChange={(v) => update("status", v)}
         options={[
           { id: "all", label: "All statuses" },
           ...STATUSES.map((s) => ({ id: s, label: s[0].toUpperCase() + s.slice(1) })),
         ]}
+      />
+      <Select
+        label="Account"
+        value={params.get("account") ?? "all"}
+        onChange={(v) => update("account", v)}
+        options={[{ id: "all", label: "All" }, ...ACCOUNTS]}
       />
     </div>
   );

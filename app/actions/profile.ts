@@ -24,6 +24,6 @@ export async function saveProfilesAction(
     if (v) profiles[p.id] = v;
   }
   await setUserProfiles(user.uid, profiles);
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }

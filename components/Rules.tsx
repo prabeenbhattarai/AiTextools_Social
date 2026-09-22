@@ -57,9 +57,10 @@ export default function Rules({
 
       <div className="mt-5 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
         <strong className="text-slate-800">Same-account check:</strong> set your
-        account handle for each platform below. When a submitted link doesn&apos;t
-        match your registered account, it is flagged to the admin as a{" "}
-        <em>different account</em>. Submit from your own account to get paid.
+        account handle for each platform in <em>My accounts</em>. When a
+        submitted link doesn&apos;t match your registered account, it is flagged
+        to the admin as a <em>different account</em>. Submit from your own
+        account to get paid.
       </div>
     </section>
   );

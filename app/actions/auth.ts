@@ -85,6 +85,6 @@ export async function createMemberAction(
     createdBy: admin.username,
   });
   if (!res.ok) return { error: res.error };
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }

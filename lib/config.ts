@@ -50,6 +50,21 @@ export function platformLabel(id: Platform): string {
   return PLATFORMS.find((p) => p.id === id)?.label ?? id;
 }
 
+/** Build a full rate table for a user (their overrides applied over global). */
+export function effectiveTable(
+  global: PricingTable | null | undefined,
+  override?: PricingOverride | null,
+): PricingTable {
+  const out = {} as PricingTable;
+  for (const p of PLATFORMS) {
+    out[p.id] = {} as PricingTable[Platform];
+    for (const t of LINK_TYPES) {
+      out[p.id][t.id] = effectivePrice(p.id, t.id, global, override);
+    }
+  }
+  return out;
+}
+
 /** Normalise a raw profile input to a bare handle for matching in a URL. */
 export function extractHandle(platform: Platform, raw: string): string {
   const h = (raw ?? "").trim().toLowerCase();

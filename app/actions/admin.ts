@@ -43,7 +43,7 @@ export async function reviewLinkAction(
   }
 
   await reviewLink(id, decision, admin.username, price);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -54,7 +54,7 @@ export async function setMemberActiveAction(
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Forbidden." };
   await setUserActive(uid, active);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -80,8 +80,8 @@ export async function setGlobalPricingAction(
     }
   }
   await setGlobalPricing(table);
-  revalidatePath("/admin");
-  revalidatePath("/dashboard");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
 
@@ -93,6 +93,6 @@ export async function setMemberPricingAction(
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Forbidden." };
   await setUserPricing(uid, override);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
