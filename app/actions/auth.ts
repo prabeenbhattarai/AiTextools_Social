@@ -9,7 +9,9 @@ import {
   createUser,
   findUserByUsername,
   superadminExists,
+  updateMemberCredentials,
 } from "@/lib/data";
+import { checkMaster } from "@/lib/auth/master";
 
 export interface FormState {
   error?: string;
@@ -46,6 +48,46 @@ export async function loginAction(
 export async function logoutAction(): Promise<void> {
   await destroySession();
   redirect("/login");
+}
+
+// Master-password recovery: create a new superadmin, or reset the password of
+// an existing superadmin with that username. Then sign in.
+export async function recoverAdminAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const master = String(formData.get("master") ?? "");
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!process.env.MASTER_PASSWORD) {
+    return { error: "Recovery is not configured (MASTER_PASSWORD missing)." };
+  }
+  if (!checkMaster(master)) return { error: "Wrong master password." };
+  if (password.length < 6) return { error: "Password must be at least 6 characters." };
+
+  const existing = await findUserByUsername(username);
+  if (existing) {
+    if (existing.doc.role !== "superadmin") {
+      return { error: "That username belongs to a member. Choose another." };
+    }
+    const res = await updateMemberCredentials(existing.id, { password });
+    if (!res.ok) return { error: res.error };
+    await createSession(existing.id);
+    redirect("/admin");
+  }
+
+  const res = await createUser({
+    username,
+    password,
+    fullName: username,
+    role: "superadmin",
+    createdBy: null,
+  });
+  if (!res.ok) return { error: res.error };
+  const found = await findUserByUsername(username);
+  if (found) await createSession(found.id);
+  redirect("/admin");
 }
 
 export async function setupAction(
