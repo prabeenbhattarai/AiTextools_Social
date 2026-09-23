@@ -15,6 +15,7 @@ export default function MemberPaymentView({
   const [loaded, setLoaded] = useState(false);
   const [payment, setPayment] = useState<PaymentDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [zoom, setZoom] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   function openModal() {
@@ -69,16 +70,38 @@ export default function MemberPaymentView({
                   This member hasn&apos;t added payment details yet.
                 </p>
               )}
-              {loaded && payment && <Details payment={payment} />}
+              {loaded && payment && (
+                <Details payment={payment} onZoom={setZoom} />
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {zoom && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setZoom(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={zoom}
+            alt="QR"
+            className="max-h-[90vh] max-w-[90vw] rounded-lg bg-white object-contain p-2"
+          />
         </div>
       )}
     </>
   );
 }
 
-function Details({ payment }: { payment: PaymentDetails }) {
+function Details({
+  payment,
+  onZoom,
+}: {
+  payment: PaymentDetails;
+  onZoom: (src: string) => void;
+}) {
   if (payment.method === "esewa") {
     return (
       <div>
@@ -92,15 +115,19 @@ function Details({ payment }: { payment: PaymentDetails }) {
         {payment.esewa?.qr && (
           <div className="mt-4">
             <div className="mb-1 text-xs font-medium text-slate-500">QR</div>
-            <a href={payment.esewa.qr} target="_blank" rel="noopener noreferrer">
+            <button
+              type="button"
+              onClick={() => onZoom(payment.esewa!.qr!)}
+              className="block cursor-zoom-in"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={payment.esewa.qr}
                 alt="eSewa QR"
                 className="h-56 w-56 rounded-lg border border-slate-200 object-contain"
               />
-            </a>
-            <p className="mt-1 text-xs text-slate-400">Click the QR to open full size.</p>
+            </button>
+            <p className="mt-1 text-xs text-slate-400">Click the QR to enlarge.</p>
           </div>
         )}
       </div>

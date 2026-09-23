@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
 import { createLink, deleteOwnLink, getGlobalPricing, updateOwnLink } from "@/lib/data";
-import { PLATFORMS, LINK_TYPES, checkAccount, effectivePrice } from "@/lib/config";
+import { PLATFORMS, LINK_TYPES, effectivePrice } from "@/lib/config";
+import { verifyAccount } from "@/lib/verify";
 import type { LinkType, Platform } from "@/lib/types";
 
 export interface LinkFormState {
@@ -42,7 +43,12 @@ export async function createLinkAction(
     url: parsed.url,
     note: parsed.note,
     price: effectivePrice(parsed.platform, parsed.type, global, user.pricing),
-    accountCheck: checkAccount(parsed.platform, parsed.url, user.profiles),
+    accountCheck: await verifyAccount(
+      parsed.platform,
+      parsed.type,
+      parsed.url,
+      user.profiles,
+    ),
   });
   revalidatePath("/dashboard", "layout");
   return { ok: true };
@@ -61,7 +67,12 @@ export async function updateLinkAction(
   const res = await updateOwnLink(id, user.uid, {
     ...parsed,
     price: effectivePrice(parsed.platform, parsed.type, global, user.pricing),
-    accountCheck: checkAccount(parsed.platform, parsed.url, user.profiles),
+    accountCheck: await verifyAccount(
+      parsed.platform,
+      parsed.type,
+      parsed.url,
+      user.profiles,
+    ),
   });
   if (!res.ok) return { error: res.error };
   revalidatePath("/dashboard", "layout");
