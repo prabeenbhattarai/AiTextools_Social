@@ -8,6 +8,7 @@ const nav: NavEntry[] = [
   { type: "link", href: "/admin", label: "Overview", icon: "overview" },
   { type: "link", href: "/admin/links", label: "Links", icon: "links" },
   { type: "link", href: "/admin/members", label: "Members", icon: "members" },
+  { type: "link", href: "/admin/payouts", label: "Payouts", icon: "payouts" },
   {
     type: "group",
     label: "Settings",

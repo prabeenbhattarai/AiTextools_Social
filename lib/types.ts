@@ -41,6 +41,18 @@ export interface PaymentDetails {
   updatedAt: number;
 }
 
+/** A recorded payout made to a member. */
+export interface Payout {
+  id: string;
+  userId: string;
+  username: string;
+  fullName: string;
+  amount: number;
+  note: string;
+  createdAt: number;
+  createdBy: string;
+}
+
 /** Safe user shape (never includes secrets). */
 export interface AppUser {
   uid: string;

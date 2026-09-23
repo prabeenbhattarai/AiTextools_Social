@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
 import {
+  addPayout,
+  deletePayout,
   getGlobalPricing,
   getLink,
   getUserById,
@@ -82,6 +84,39 @@ export async function setGlobalPricingAction(
   await setGlobalPricing(table);
   revalidatePath("/admin", "layout");
   revalidatePath("/dashboard", "layout");
+  return { ok: true };
+}
+
+export async function recordPayoutAction(
+  userId: string,
+  amount: number,
+  note: string,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Forbidden." };
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, error: "Enter an amount greater than 0." };
+  }
+  const member = await getUserById(userId);
+  if (!member) return { ok: false, error: "Member not found." };
+
+  await addPayout({
+    userId,
+    username: member.username,
+    fullName: member.fullName,
+    amount: Math.round(amount),
+    note: note.trim(),
+    createdBy: admin.username,
+  });
+  revalidatePath("/admin", "layout");
+  return { ok: true };
+}
+
+export async function deletePayoutAction(id: string): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Forbidden." };
+  await deletePayout(id);
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 

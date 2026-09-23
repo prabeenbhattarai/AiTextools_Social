@@ -10,6 +10,7 @@ import type {
   LinkStatus,
   LinkType,
   PaymentDetails,
+  Payout,
   Platform,
   PlatformProfiles,
   PricingOverride,
@@ -379,6 +380,41 @@ export async function listAllLinks(filters?: {
   }
   items.sort((a, b) => b.createdAt - a.createdAt);
   return items;
+}
+
+/* ----------------------------- Payouts ----------------------------- */
+
+export async function addPayout(params: {
+  userId: string;
+  username: string;
+  fullName: string;
+  amount: number;
+  note: string;
+  createdBy: string;
+}): Promise<void> {
+  await db().collection("payouts").add({
+    userId: params.userId,
+    username: params.username,
+    fullName: params.fullName,
+    amount: params.amount,
+    note: params.note,
+    createdAt: Date.now(),
+    createdBy: params.createdBy,
+  });
+}
+
+export async function listPayouts(): Promise<Payout[]> {
+  const snap = await db().collection("payouts").get();
+  const items = snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as Omit<Payout, "id">),
+  }));
+  items.sort((a, b) => b.createdAt - a.createdAt);
+  return items;
+}
+
+export async function deletePayout(id: string): Promise<void> {
+  await db().collection("payouts").doc(id).delete();
 }
 
 /* ----------------------------- Stats ----------------------------- */
