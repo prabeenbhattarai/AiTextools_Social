@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deletePayoutAction, recordPayoutAction } from "@/app/actions/admin";
+import { recordPayoutAction } from "@/app/actions/admin";
 import { money, formatDate } from "@/components/ui";
 import MemberPaymentView from "../MemberPaymentView";
 import type { AppUser, Payout } from "@/lib/types";
@@ -32,13 +32,6 @@ export default function PayoutRow({
       const res = await recordPayoutAction(member.uid, amount, note);
       if (!res.ok) setError(res.error ?? "Failed");
       else setRecording(false);
-    });
-  }
-
-  function remove(id: string) {
-    if (!confirm("Delete this payout record?")) return;
-    start(async () => {
-      await deletePayoutAction(id);
     });
   }
 
@@ -132,13 +125,6 @@ export default function PayoutRow({
                     <span className="text-xs text-slate-500">{formatDate(p.createdAt)}</span>
                     {p.note && <span className="text-xs text-slate-500">— {p.note}</span>}
                     <span className="text-xs text-slate-400">by @{p.createdBy}</span>
-                    <button
-                      onClick={() => remove(p.id)}
-                      disabled={pending}
-                      className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
-                    >
-                      delete
-                    </button>
                   </li>
                 ))}
               </ul>

@@ -413,10 +413,6 @@ export async function listPayouts(): Promise<Payout[]> {
   return items;
 }
 
-export async function deletePayout(id: string): Promise<void> {
-  await db().collection("payouts").doc(id).delete();
-}
-
 /** Total already paid to one member. */
 export async function getMemberPaid(uid: string): Promise<number> {
   const snap = await db().collection("payouts").where("userId", "==", uid).get();

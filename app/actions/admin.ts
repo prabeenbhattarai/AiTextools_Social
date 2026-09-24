@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   addPayout,
-  deletePayout,
   getGlobalPricing,
   getLink,
   getUserById,
@@ -122,14 +121,6 @@ export async function recordPayoutAction(
     note: note.trim(),
     createdBy: admin.username,
   });
-  revalidatePath("/admin", "layout");
-  return { ok: true };
-}
-
-export async function deletePayoutAction(id: string): Promise<ActionResult> {
-  const admin = await requireAdmin();
-  if (!admin) return { ok: false, error: "Forbidden." };
-  await deletePayout(id);
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
