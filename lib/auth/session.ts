@@ -2,6 +2,7 @@ import "server-only";
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { normalizeProfiles } from "@/lib/config";
 import type { AppUser, UserDoc } from "@/lib/types";
 
 const COOKIE = "session";
@@ -77,6 +78,6 @@ export async function getSessionUser(): Promise<AppUser | null> {
     createdAt: doc.createdAt,
     createdBy: doc.createdBy ?? null,
     pricing: doc.pricing ?? null,
-    profiles: doc.profiles ?? {},
+    profiles: normalizeProfiles(doc.profiles),
   };
 }

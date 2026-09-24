@@ -9,11 +9,19 @@ import {
   formatDate,
   money,
 } from "@/components/ui";
+import { approvableAt } from "@/lib/config";
 import type { LinkItem } from "@/lib/types";
+
+function daysLeft(ms: number): number {
+  return Math.ceil((ms - Date.now()) / (24 * 60 * 60 * 1000));
+}
 
 export default function AdminLinkRow({ link }: { link: LinkItem }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const eligibleAt = approvableAt(link.platform, link.type, link.createdAt);
+  const locked = Date.now() < eligibleAt;
 
   function review(decision: "approve" | "reject") {
     setError(null);
@@ -53,15 +61,23 @@ export default function AdminLinkRow({ link }: { link: LinkItem }) {
         {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
-        {link.status !== "approved" && (
-          <button
-            onClick={() => review("approve")}
-            disabled={pending}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            Approve
-          </button>
-        )}
+        {link.status !== "approved" &&
+          (locked ? (
+            <span
+              className="inline-block rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500"
+              title={`Approvable on ${formatDate(eligibleAt)}`}
+            >
+              Hold · {daysLeft(eligibleAt)}d
+            </span>
+          ) : (
+            <button
+              onClick={() => review("approve")}
+              disabled={pending}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              Approve
+            </button>
+          ))}
         {link.status !== "rejected" && (
           <button
             onClick={() => review("reject")}

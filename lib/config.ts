@@ -107,16 +107,66 @@ export function extractHandle(platform: Platform, raw: string): string {
   return h.replace(/^@/, "");
 }
 
+/** Convert stored profiles (old single-string or new array) into a clean array map. */
+export function normalizeProfiles(raw: unknown): PlatformProfiles {
+  const out: PlatformProfiles = {};
+  if (!raw || typeof raw !== "object") return out;
+  const obj = raw as Record<string, unknown>;
+  for (const p of PLATFORMS) {
+    const v = obj[p.id];
+    let arr: string[] = [];
+    if (Array.isArray(v)) arr = v.filter((x): x is string => typeof x === "string");
+    else if (typeof v === "string") arr = [v];
+    arr = [...new Set(arr.map((s) => s.trim()).filter(Boolean))];
+    if (arr.length) out[p.id] = arr;
+  }
+  return out;
+}
+
+/** All registered handles for a platform. */
+export function handlesFor(
+  platform: Platform,
+  profiles: PlatformProfiles | null | undefined,
+): string[] {
+  return (profiles?.[platform] ?? [])
+    .map((h) => extractHandle(platform, h))
+    .filter(Boolean);
+}
+
 /**
- * Heuristic same-account check: does the submitted URL contain the member's
- * registered handle for that platform? Advisory only — the admin decides.
+ * Heuristic same-account check: does the submitted URL contain ANY of the
+ * member's registered handles for that platform? Advisory only.
  */
 export function checkAccount(
   platform: Platform,
   url: string,
   profiles: PlatformProfiles | null | undefined,
 ): AccountCheck {
-  const handle = extractHandle(platform, profiles?.[platform] ?? "");
-  if (!handle) return "unset";
-  return url.toLowerCase().includes(handle) ? "match" : "mismatch";
+  const handles = handlesFor(platform, profiles);
+  if (!handles.length) return "unset";
+  const u = url.toLowerCase();
+  return handles.some((h) => u.includes(h)) ? "match" : "mismatch";
+}
+
+// Reddit: how long a post/comment must stay live before it can be approved.
+export const REDDIT_HOLD_DAYS: Record<LinkType, number> = { post: 3, comment: 4 };
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Timestamp when a link becomes approvable (0 = immediately). */
+export function approvableAt(
+  platform: Platform,
+  type: LinkType,
+  createdAt: number,
+): number {
+  if (platform === "reddit") return createdAt + REDDIT_HOLD_DAYS[type] * DAY_MS;
+  return 0;
+}
+
+export function isApprovable(
+  platform: Platform,
+  type: LinkType,
+  createdAt: number,
+  now: number = Date.now(),
+): boolean {
+  return now >= approvableAt(platform, type, createdAt);
 }

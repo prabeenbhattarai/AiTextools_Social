@@ -8,6 +8,7 @@ const nav: NavEntry[] = [
   { type: "link", href: "/dashboard", label: "Overview", icon: "overview" },
   { type: "link", href: "/dashboard/submit", label: "Submit link", icon: "submit" },
   { type: "link", href: "/dashboard/links", label: "My links", icon: "links" },
+  { type: "link", href: "/dashboard/engage", label: "Engage", icon: "engage" },
   { type: "link", href: "/dashboard/accounts", label: "My accounts", icon: "accounts" },
   { type: "link", href: "/dashboard/payment", label: "Payment", icon: "payment" },
 ];

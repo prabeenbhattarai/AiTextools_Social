@@ -93,7 +93,7 @@ export default function PayoutRow({
                   min={1}
                   defaultValue={remaining > 0 ? remaining : ""}
                   required
-                  className="mt-1 w-32 rounded-md border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-slate-900"
+                  className="mt-1 w-32 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900"
                 />
               </div>
               <div className="flex-1 min-w-[180px]">

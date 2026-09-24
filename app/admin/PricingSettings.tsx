@@ -37,7 +37,7 @@ export default function PricingSettings({ rates }: { rates: PricingTable }) {
                         type="number"
                         min={0}
                         defaultValue={rates[p.id][t.id]}
-                        className="w-full px-2 py-1.5 text-slate-900 outline-none"
+                        className="w-full px-2 py-1.5 font-semibold text-slate-900 outline-none"
                       />
                     </div>
                   </label>

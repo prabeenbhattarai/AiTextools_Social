@@ -1,5 +1,5 @@
 import "server-only";
-import { checkAccount, extractHandle } from "@/lib/config";
+import { checkAccount, handlesFor } from "@/lib/config";
 import type { AccountCheck, LinkType, Platform, PlatformProfiles } from "@/lib/types";
 
 /**
@@ -26,12 +26,13 @@ async function verifyReddit(
   url: string,
   profiles: PlatformProfiles | null | undefined,
 ): Promise<AccountCheck> {
-  const handle = extractHandle("reddit", profiles?.reddit ?? "");
-  if (!handle) return "unset";
+  const handles = handlesFor("reddit", profiles);
+  if (!handles.length) return "unset";
 
   const author = await fetchRedditAuthor(url, type);
   if (author === null) return "unset"; // could not determine — manual review
-  return author.toLowerCase() === handle.toLowerCase() ? "match" : "mismatch";
+  const a = author.toLowerCase();
+  return handles.some((h) => h.toLowerCase() === a) ? "match" : "mismatch";
 }
 
 async function fetchRedditAuthor(

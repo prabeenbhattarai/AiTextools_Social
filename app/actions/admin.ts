@@ -13,7 +13,14 @@ import {
   setUserActive,
   setUserPricing,
 } from "@/lib/data";
-import { PLATFORMS, LINK_TYPES, effectivePrice } from "@/lib/config";
+import {
+  PLATFORMS,
+  LINK_TYPES,
+  REDDIT_HOLD_DAYS,
+  effectivePrice,
+  isApprovable,
+  platformLabel,
+} from "@/lib/config";
 import type { Platform, PricingOverride, PricingTable } from "@/lib/types";
 
 export interface ActionResult {
@@ -37,6 +44,13 @@ export async function reviewLinkAction(
   if (decision === "approve") {
     const link = await getLink(id);
     if (!link) return { ok: false, error: "Link not found." };
+    if (!isApprovable(link.platform, link.type, link.createdAt)) {
+      const days = REDDIT_HOLD_DAYS[link.type];
+      return {
+        ok: false,
+        error: `${platformLabel(link.platform)} ${link.type}s must stay live ${days} days before approval.`,
+      };
+    }
     const [global, owner] = await Promise.all([
       getGlobalPricing(),
       getUserById(link.userId),

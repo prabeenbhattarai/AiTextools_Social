@@ -25,6 +25,8 @@ export default function MemberRow({
   const hasCustom = !!member.pricing && Object.keys(member.pricing).length > 0;
 
   function toggleActive() {
+    const action = member.active ? "Deactivate" : "Activate";
+    if (!confirm(`${action} @${member.username}?`)) return;
     setError(null);
     startTransition(async () => {
       const res = await setMemberActiveAction(member.uid, !member.active);
@@ -79,7 +81,7 @@ export default function MemberRow({
               <span key={p.id}>
                 {p.label}:{" "}
                 <span className="text-slate-700">
-                  {member.profiles[p.id] || "—"}
+                  {member.profiles[p.id]?.join(", ") || "—"}
                 </span>
               </span>
             ))}

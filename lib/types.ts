@@ -10,8 +10,8 @@ export type PricingOverride = Partial<
   Record<Platform, Partial<Record<LinkType, number>>>
 >;
 
-/** A member's account handle/profile per platform (used to verify links). */
-export type PlatformProfiles = Partial<Record<Platform, string>>;
+/** A member's account handles per platform (used to verify links). Multiple allowed. */
+export type PlatformProfiles = Partial<Record<Platform, string[]>>;
 
 /** Result of checking whether a link belongs to the member's own account. */
 export type AccountCheck = "match" | "mismatch" | "unset";

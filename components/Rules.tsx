@@ -36,7 +36,7 @@ export default function Rules({
             "Write genuine, on-topic content — no spam or copy-paste.",
             "Comments must add value, not just “nice” or emojis.",
             "Post from your registered account; paste the direct permalink.",
-            "It must stay live — removed items get rejected.",
+            "Must stay live 3 days (posts) / 4 days (comments) before approval.",
           ]}
           post={rates.reddit.post}
           comment={rates.reddit.comment}

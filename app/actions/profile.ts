@@ -20,8 +20,12 @@ export async function saveProfilesAction(
 
   const profiles: PlatformProfiles = {};
   for (const p of PLATFORMS) {
-    const v = String(formData.get(`profile_${p.id}`) ?? "").trim();
-    if (v) profiles[p.id] = v;
+    const vals = formData
+      .getAll(`profile_${p.id}`)
+      .map((v) => String(v).trim())
+      .filter(Boolean);
+    const uniq = [...new Set(vals)];
+    if (uniq.length) profiles[p.id] = uniq;
   }
   await setUserProfiles(user.uid, profiles);
   revalidatePath("/dashboard", "layout");

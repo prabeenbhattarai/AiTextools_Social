@@ -2,7 +2,7 @@ import "server-only";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { hashPassword } from "@/lib/auth/password";
 import { encryptSecret, decryptSecret } from "@/lib/crypto/secretbox";
-import { DEFAULT_PRICING } from "@/lib/config";
+import { DEFAULT_PRICING, normalizeProfiles } from "@/lib/config";
 import type {
   AccountCheck,
   AppUser,
@@ -33,7 +33,7 @@ function toAppUser(id: string, d: UserDoc): AppUser {
     createdAt: d.createdAt,
     createdBy: d.createdBy ?? null,
     pricing: d.pricing ?? null,
-    profiles: d.profiles ?? {},
+    profiles: normalizeProfiles(d.profiles),
   };
 }
 
@@ -421,6 +421,27 @@ export async function deletePayout(id: string): Promise<void> {
 export async function getMemberPaid(uid: string): Promise<number> {
   const snap = await db().collection("payouts").where("userId", "==", uid).get();
   return snap.docs.reduce((s, d) => s + ((d.data() as Payout).amount ?? 0), 0);
+}
+
+/** A member's own payout history (payments received). */
+export async function listPayoutsForUser(uid: string): Promise<Payout[]> {
+  const snap = await db().collection("payouts").where("userId", "==", uid).get();
+  const items = snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as Omit<Payout, "id">),
+  }));
+  items.sort((a, b) => b.createdAt - a.createdAt);
+  return items;
+}
+
+/** Other members' live links (for the Engage section) — excludes rejected and own. */
+export async function listEngageLinks(excludeUserId: string): Promise<LinkItem[]> {
+  const snap = await db().collection("links").get();
+  const items = snap.docs
+    .map((d) => ({ id: d.id, ...(d.data() as Omit<LinkItem, "id">) }))
+    .filter((l) => l.userId !== excludeUserId && l.status !== "rejected");
+  items.sort((a, b) => b.createdAt - a.createdAt);
+  return items;
 }
 
 /* ----------------------------- Stats ----------------------------- */
